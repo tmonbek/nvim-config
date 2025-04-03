@@ -1,12 +1,23 @@
 local configs = require "nvchad.configs.lspconfig"
 
-local on_attach = configs.on_attach
-local on_init = configs.on_init
-local capabilities = configs.capabilities
+local on_attach = function(client, bufnr)
+  configs.on_attach(client, bufnr)
 
+  -- Автоформатирование при сохранении
+  if client.server_capabilities.documentFormattingProvider then
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.buf.format()
+      end,
+    })
+  end
+end
+
+local capabilities = configs.capabilities
 local lspconfig = require "lspconfig"
 
--- if you just want default config for the servers then put them in a table
+-- Серверы, которые нужно запустить
 local servers = { "html", "cssls", "tsserver", "clangd", "gopls", "gradle_ls" }
 
 local function organize_imports()
@@ -37,14 +48,16 @@ for _, lsp in ipairs(servers) do
       },
     },
   }
-  lspconfig.prismals.setup {}
-  lspconfig.volar.setup {
-    on_attach = on_attach,
-    filetypes = { "typescript", "javascript", "javascriptreact", "typescriptreact", "vue" },
-    init_options = {
-      vue = {
-        hybridMode = false,
-      },
-    },
-  }
 end
+
+-- Дополнительные настройки для prismals и volar
+lspconfig.prismals.setup {}
+lspconfig.volar.setup {
+  on_attach = on_attach,
+  filetypes = { "typescript", "javascript", "javascriptreact", "typescriptreact", "vue" },
+  init_options = {
+    vue = {
+      hybridMode = false,
+    },
+  },
+}
